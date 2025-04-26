@@ -1,6 +1,10 @@
 #![windows_subsystem = "windows"]
 
-use std::{env, fs::File, io};
+use std::{
+    env, fs, io,
+    path::Path,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use reqwest::blocking;
 use serde_json::Value;
@@ -32,7 +36,7 @@ fn main() {
         let image_bytes = blocking::get(&image_url).unwrap().bytes().unwrap();
 
         // 保存到本地
-        let mut file = File::create(&wallpaper_path).unwrap();
+        let mut file = fs::File::create(&wallpaper_path).unwrap();
         io::copy(&mut io::Cursor::new(image_bytes), &mut file).unwrap();
     }
 
