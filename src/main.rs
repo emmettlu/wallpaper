@@ -4,7 +4,7 @@ use reqwest::blocking;
 use serde_json::Value;
 use std::{env, fs::File, io};
 use windows::Win32::UI::WindowsAndMessaging::{
-    SystemParametersInfoW, SPIF_UPDATEINIFILE, SPI_SETDESKWALLPAPER,
+    SPI_SETDESKWALLPAPER, SPIF_UPDATEINIFILE, SystemParametersInfoW,
 };
 
 const PICTURE_DIR: &str = "/Pictures/today_bing.jpg";
@@ -13,7 +13,7 @@ const HOME_ENV: &str = "USERPROFILE";
 
 fn main() {
     // 构造本地保存路径
-    let picture_path = env::var(HOME_ENV).unwrap() + PICTURE_DIR;
+    let wallpaper_path = env::var(HOME_ENV).unwrap() + PICTURE_DIR;
 
     // 请求 Bing 官方 JSON 接口
     let response = blocking::get(BING_JSON_API).unwrap().text().unwrap();
@@ -30,10 +30,10 @@ fn main() {
     let image_bytes = blocking::get(&image_url).unwrap().bytes().unwrap();
 
     // 保存到本地
-    let mut file = File::create(&picture_path).unwrap();
+    let mut file = File::create(&wallpaper_path).unwrap();
     io::copy(&mut io::Cursor::new(image_bytes), &mut file).unwrap();
 
-    let file_path_wide: Vec<u16> = picture_path
+    let wallpaper_path: Vec<u16> = wallpaper_path
         .encode_utf16()
         .chain(std::iter::once(0))
         .collect();
@@ -42,7 +42,7 @@ fn main() {
         SystemParametersInfoW(
             SPI_SETDESKWALLPAPER,
             0,
-            Some(file_path_wide.as_ptr() as *mut _),
+            Some(wallpaper_path.as_ptr() as *mut _),
             SPIF_UPDATEINIFILE,
         )
         .unwrap()
