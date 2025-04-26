@@ -1,35 +1,39 @@
 #![windows_subsystem = "windows"]
 
-use std::fs::File;
-use std::io::{self, copy};
-use std::net::TcpStream;
-use std::thread;
-use std::time::Duration;
-
 use reqwest::blocking;
+use serde_json::Value;
+use std::{env, fs::File, io};
 use windows::Win32::UI::WindowsAndMessaging::{
     SystemParametersInfoW, SPIF_UPDATEINIFILE, SPI_SETDESKWALLPAPER,
 };
 
-const URL: &str = "https://bing.img.run/uhd.php";
-const PATH_BASE: &str = "/Pictures/Today_Bing_Wallpaper.jpg";
+const PICTURE_DIR: &str = "/Pictures/today_bing.jpg";
+const BING_JSON_API: &str = "https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=zh-CN";
+const HOME_ENV: &str = "USERPROFILE";
 
 fn main() {
-    let home_path = home::home_dir().unwrap();
-    let home_dir = home_path.to_str().unwrap().to_string();
-    let result_dir = home_dir + PATH_BASE;
+    // 构造本地保存路径
+    let picture_path = env::var(HOME_ENV).unwrap() + PICTURE_DIR;
 
-    while TcpStream::connect("8.8.8.8:53").is_err() {
-        thread::sleep(Duration::from_secs(3))
-    }
+    // 请求 Bing 官方 JSON 接口
+    let response = blocking::get(BING_JSON_API).unwrap().text().unwrap();
 
-    let response = blocking::get(URL).unwrap();
-    let mut file = File::create(&result_dir).unwrap();
-    let mut content = io::Cursor::new(response.bytes().unwrap()); // 获取内容并写入
+    let json: Value = serde_json::from_str(&response).unwrap();
 
-    copy(&mut content, &mut file).unwrap();
+    // 提取 urlbase 字段
+    let urlbase = json["images"][0]["urlbase"].as_str().unwrap();
 
-    let file_path_wide: Vec<u16> = result_dir
+    // 拼接出 UHD 图片的完整 URL
+    let image_url = format!("https://cn.bing.com{}_UHD.jpg", urlbase);
+
+    // 下载图片
+    let image_bytes = blocking::get(&image_url).unwrap().bytes().unwrap();
+
+    // 保存到本地
+    let mut file = File::create(&picture_path).unwrap();
+    io::copy(&mut io::Cursor::new(image_bytes), &mut file).unwrap();
+
+    let file_path_wide: Vec<u16> = picture_path
         .encode_utf16()
         .chain(std::iter::once(0))
         .collect();
