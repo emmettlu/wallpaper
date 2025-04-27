@@ -2,8 +2,10 @@
 
 use std::{
     env, fs, io,
+    net::TcpStream,
     path::Path,
-    time::{SystemTime, UNIX_EPOCH},
+    thread,
+    time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
 use reqwest::blocking;
@@ -21,6 +23,11 @@ fn main() {
     let wallpaper_path = env::var(HOME_ENV).unwrap() + PICTURE_DIR;
 
     if should_download(&wallpaper_path) {
+        // 检查网络连接
+        while TcpStream::connect("223.5.5.5:53").is_err() {
+            thread::sleep(Duration::from_secs(3))
+        }
+
         // 请求 Bing 官方 JSON 接口
         let response = blocking::get(BING_JSON_API).unwrap().text().unwrap();
 
