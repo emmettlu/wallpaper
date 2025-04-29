@@ -1,13 +1,7 @@
 #![windows_subsystem = "windows"]
+use std::{env, fs, io, net::TcpStream, path::Path, thread, time::Duration};
 
-use std::{
-    env, fs, io,
-    net::TcpStream,
-    path::Path,
-    thread,
-    time::{Duration, SystemTime, UNIX_EPOCH},
-};
-
+use chrono::Local;
 use reqwest::blocking;
 use serde_json::Value;
 use windows::Win32::UI::WindowsAndMessaging::{
@@ -69,26 +63,15 @@ fn should_download(path: &str) -> bool {
     if path.exists() {
         let metadata = fs::metadata(path).unwrap();
         if metadata.len() > 0 {
-            // 文件不为空
-            // 获取文件的最后修改时间
             let modified_time = metadata.modified().unwrap();
-            // 获取当前系统时间
-            let current_time = SystemTime::now();
+            let datetime: chrono::DateTime<chrono::Local> = modified_time.into();
+            let now = Local::now();
 
-            // 将两个时间转换为自 UNIX_EPOCH 以来的秒数
-            let modified_secs = modified_time.duration_since(UNIX_EPOCH).unwrap().as_secs();
-            let current_secs = current_time.duration_since(UNIX_EPOCH).unwrap().as_secs();
-
-            // 计算日期（天数）
-            let modified_day = modified_secs / (24 * 3600);
-            let current_day = current_secs / (24 * 3600);
-
-            // 如果不在同一天，则需要下载
-            modified_day != current_day
+            datetime.date_naive() != now.date_naive()
         } else {
-            true // 文件为空，需要下载
+            true
         }
     } else {
-        true // 文件不存在，需要下载
+        true
     }
 }
