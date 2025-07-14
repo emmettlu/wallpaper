@@ -13,30 +13,23 @@ const BING_JSON_API: &str = "https://cn.bing.com/HPImageArchive.aspx?format=js&i
 const HOME_ENV: &str = "USERPROFILE";
 
 fn main() {
-    // 构造本地保存路径
     let wallpaper_path = env::var(HOME_ENV).unwrap() + PICTURE_DIR;
 
     if should_download(&wallpaper_path) {
-        // 检查网络连接
         while TcpStream::connect("223.5.5.5:53").is_err() {
             thread::sleep(Duration::from_secs(3))
         }
 
-        // 请求 Bing 官方 JSON 接口
         let response = blocking::get(BING_JSON_API).unwrap().text().unwrap();
 
         let json: Value = serde_json::from_str(&response).unwrap();
 
-        // 提取 urlbase 字段
         let urlbase = json["images"][0]["urlbase"].as_str().unwrap();
 
-        // 拼接出 UHD 图片的完整 URL
-        let image_url = format!("https://cn.bing.com{}_UHD.jpg", urlbase);
+        let image_url = format!("https://cn.bing.com{urlbase}_UHD.jpg");
 
-        // 下载图片
         let image_bytes = blocking::get(&image_url).unwrap().bytes().unwrap();
 
-        // 保存到本地
         let mut file = fs::File::create(&wallpaper_path).unwrap();
         io::copy(&mut io::Cursor::new(image_bytes), &mut file).unwrap();
     }
