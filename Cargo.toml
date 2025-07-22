@@ -15,6 +15,6 @@ debug = false
 [profile.release]
 codegen-units = 1
 debug = false
+lto = true
 panic = "abort"
 strip = true
-lto = true
