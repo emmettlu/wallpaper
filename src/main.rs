@@ -24,6 +24,12 @@ fn main() {
     let wallpaper_path = env::var(HOME_ENV).unwrap() + PICTURE_DIR;
 
     if should_download(&wallpaper_path) {
+        #[cfg(not(windows))]
+        unsafe {
+            env::remove_var("HTTP_PROXY");
+            env::remove_var("HTTPS_PROXY");
+        }
+
         while TcpStream::connect(SocketAddr::from(TEST_ADDR)).is_err() {
             thread::sleep(Duration::from_secs(2))
         }
@@ -38,6 +44,9 @@ fn main() {
 
         #[cfg(windows)]
         set_windows_wallpaper(&wallpaper_path)
+    } else {
+        #[cfg(not(windows))]
+        std::process::exit(1)
     }
 }
 
