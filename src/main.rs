@@ -10,10 +10,6 @@ use std::{
 use chrono::Local;
 use reqwest::blocking;
 use serde_json::Value;
-#[cfg(windows)]
-use windows::Win32::UI::WindowsAndMessaging::{
-    SPI_SETDESKWALLPAPER, SPIF_UPDATEINIFILE, SystemParametersInfoW,
-};
 
 const TEST_ADDR: ([u8; 4], u16) = ([223, 5, 5, 5], 53);
 const PICTURE_DIR: &str = "/Pictures/today_bing.jpg";
@@ -43,7 +39,7 @@ fn main() {
         fs::write(&wallpaper_path, &image_bytes).unwrap();
 
         #[cfg(windows)]
-        set_windows_wallpaper(&wallpaper_path)
+        windows_set_wallpaper(&wallpaper_path)
     } else {
         #[cfg(unix)]
         std::process::exit(1)
@@ -69,7 +65,21 @@ fn should_download(path: &str) -> bool {
 
 #[cfg(windows)]
 #[inline(always)]
-fn set_windows_wallpaper(path: &str) {
+fn windows_set_wallpaper(path: &str) {
+    use futures::executor::block_on;
+    use windows::{
+        Storage::StorageFile,
+        System::UserProfile::LockScreen,
+        Win32::{
+            System::WinRT::{RO_INIT_MULTITHREADED, RoInitialize},
+            UI::WindowsAndMessaging::{
+                SPI_SETDESKWALLPAPER, SPIF_UPDATEINIFILE, SystemParametersInfoW,
+            },
+        },
+        core::HSTRING,
+    };
+
+    // Common wallpaper
     let wallpaper_path: Vec<u16> = path.encode_utf16().chain(std::iter::once(0)).collect();
     unsafe {
         SystemParametersInfoW(
@@ -80,4 +90,19 @@ fn set_windows_wallpaper(path: &str) {
         )
         .unwrap()
     }
+
+    // Lockscreen wallpaper
+    unsafe {
+        RoInitialize(RO_INIT_MULTITHREADED).unwrap();
+    }
+    block_on(async {
+        let image_file = StorageFile::GetFileFromPathAsync(&HSTRING::from(path))
+            .unwrap()
+            .await
+            .unwrap();
+        LockScreen::SetImageFileAsync(&image_file)
+            .unwrap()
+            .await
+            .unwrap()
+    });
 }
