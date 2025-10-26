@@ -102,11 +102,11 @@ fn windows_set_wallpaper(wallpaper_path: &Path) {
         RoInitialize(RO_INIT_SINGLETHREADED).unwrap();
     }
     block_on(async {
-        let image_file = StorageFile::GetFileFromPathAsync(&HSTRING::from(wallpaper_path))
+        let wallpaper_path = StorageFile::GetFileFromPathAsync(&HSTRING::from(wallpaper_path))
             .unwrap()
             .await
             .unwrap();
-        LockScreen::SetImageFileAsync(&image_file)
+        LockScreen::SetImageFileAsync(&wallpaper_path)
             .unwrap()
             .await
             .unwrap();
