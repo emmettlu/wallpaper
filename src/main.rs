@@ -2,7 +2,7 @@
 use std::{
     env, fs,
     net::{SocketAddr, TcpStream},
-    path::Path,
+    path::{Path, PathBuf},
     thread,
     time::Duration,
 };
@@ -11,13 +11,14 @@ use chrono::Local;
 use reqwest::blocking;
 use serde_json::Value;
 
-const TEST_ADDR: ([u8; 4], u16) = ([223, 5, 5, 5], 53);
-const PICTURE_DIR: &str = "/Pictures/today_bing.jpg";
 const BING_JSON_API: &str = "https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=zh-CN";
 const HOME_ENV: &str = if cfg!(windows) { "USERPROFILE" } else { "HOME" };
+const TEST_ADDR: ([u8; 4], u16) = ([223, 5, 5, 5], 53);
 
 fn main() {
-    let wallpaper_path = env::var(HOME_ENV).unwrap() + PICTURE_DIR;
+    let wallpaper_path = PathBuf::from(env::var(HOME_ENV).unwrap())
+        .join("Pictures")
+        .join("today_bing.jpg");
 
     if should_download(&wallpaper_path) {
         #[cfg(unix)]
@@ -47,9 +48,8 @@ fn main() {
 }
 
 #[inline(always)]
-fn should_download(path: &str) -> bool {
-    let path = Path::new(path);
-    match fs::metadata(path) {
+fn should_download(wallpaper_path: &Path) -> bool {
+    match fs::metadata(wallpaper_path) {
         Ok(metadata) if metadata.len() > 0 => {
             if let Ok(modified) = metadata.modified() {
                 let datetime: chrono::DateTime<Local> = modified.into();
@@ -65,13 +65,15 @@ fn should_download(path: &str) -> bool {
 
 #[cfg(windows)]
 #[inline(always)]
-fn windows_set_wallpaper(path: &str) {
+fn windows_set_wallpaper(wallpaper_path: &Path) {
+    use std::os::windows::ffi::OsStrExt;
+
     use futures::executor::block_on;
     use windows::{
         Storage::StorageFile,
         System::UserProfile::LockScreen,
         Win32::{
-            System::WinRT::{RO_INIT_MULTITHREADED, RoInitialize},
+            System::WinRT::{RO_INIT_SINGLETHREADED, RoInitialize},
             UI::WindowsAndMessaging::{
                 SPI_SETDESKWALLPAPER, SPIF_UPDATEINIFILE, SystemParametersInfoW,
             },
@@ -80,29 +82,33 @@ fn windows_set_wallpaper(path: &str) {
     };
 
     // Common wallpaper
-    let wallpaper_path: Vec<u16> = path.encode_utf16().chain(std::iter::once(0)).collect();
     unsafe {
+        let wallpaper_path = wallpaper_path
+            .as_os_str()
+            .encode_wide()
+            .chain(std::iter::once(0))
+            .collect::<Vec<_>>();
         SystemParametersInfoW(
             SPI_SETDESKWALLPAPER,
             0,
             Some(wallpaper_path.as_ptr() as *mut _),
             SPIF_UPDATEINIFILE,
         )
-        .unwrap()
+        .unwrap();
     }
 
     // Lockscreen wallpaper
     unsafe {
-        RoInitialize(RO_INIT_MULTITHREADED).unwrap();
+        RoInitialize(RO_INIT_SINGLETHREADED).unwrap();
     }
     block_on(async {
-        let image_file = StorageFile::GetFileFromPathAsync(&HSTRING::from(path))
+        let image_file = StorageFile::GetFileFromPathAsync(&HSTRING::from(wallpaper_path))
             .unwrap()
             .await
             .unwrap();
         LockScreen::SetImageFileAsync(&image_file)
             .unwrap()
             .await
-            .unwrap()
+            .unwrap();
     });
 }
