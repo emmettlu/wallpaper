@@ -23,8 +23,7 @@ fn main() {
     if should_download(&wallpaper_path) {
         #[cfg(unix)]
         unsafe {
-            env::remove_var("HTTP_PROXY");
-            env::remove_var("HTTPS_PROXY");
+            env::remove_var("ALL_PROXY");
         }
 
         while TcpStream::connect(SocketAddr::from(TEST_ADDR)).is_err() {
