@@ -80,7 +80,7 @@ fn windows_set_wallpaper(wallpaper_path: &Path) {
         core::HSTRING,
     };
 
-    // Common wallpaper
+    // Desktop wallpaper
     unsafe {
         let wallpaper_path = wallpaper_path
             .as_os_str()
