@@ -10,9 +10,6 @@ serde_json = "1.0"
 
 [target.'cfg(windows)'.dependencies]
 futures = "0.3"
-windows = { version = "0.62", features = ["Win32_System_WinRT", "Win32_UI_WindowsAndMessaging", "System_UserProfile", "Storage_Streams", "Foundation"] }
-
-[profile.dev]
 windows = { version = "0.62", features = [
     "Win32_System_WinRT",
     "Win32_UI_WindowsAndMessaging",
