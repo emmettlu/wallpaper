@@ -8,7 +8,7 @@ use std::{
 };
 
 use chrono::Local;
-use reqwest::blocking;
+use ntex::{http::client::ClientBuilder, rt::System};
 use serde_json::Value;
 
 const BING_JSON_API: &str = "https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=zh-CN";
@@ -32,7 +32,9 @@ fn main() {
         }
 
         let image_bytes = System::new("").block_on(async {
-            let client = Client::build().response_payload_limit(usize::MAX).finish();
+            let client = ClientBuilder::new()
+                .response_payload_limit(usize::MAX)
+                .finish();
             let mut res = client.get(BING_JSON_API).send().await.unwrap();
             let body = res.body().await.unwrap();
             let response = String::from_utf8(body.to_vec()).unwrap();
