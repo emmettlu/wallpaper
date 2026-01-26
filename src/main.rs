@@ -33,7 +33,7 @@ fn main() {
         }
 
         let image_bytes = System::new("").block_on(async {
-            let client = Client::new();
+            let client = Client::build().response_payload_limit(usize::MAX).finish();
             let mut res = client.get(BING_JSON_API).send().await.unwrap();
             let body = res.body().await.unwrap();
             let response = String::from_utf8(body.to_vec()).unwrap();
