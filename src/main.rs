@@ -1,4 +1,4 @@
-#![windows_subsystem = "windows"]
+// #![windows_subsystem = "windows"]
 use std::{
     env, fs,
     net::{SocketAddr, TcpStream},
@@ -8,7 +8,8 @@ use std::{
 };
 
 use chrono::Local;
-use reqwest::blocking;
+use ntex::http::client::Client;
+use ntex::rt::System;
 use serde_json::Value;
 
 const BING_JSON_API: &str = "https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=zh-CN";
@@ -31,11 +32,17 @@ fn main() {
             thread::sleep(Duration::from_secs(2))
         }
 
-        let response = blocking::get(BING_JSON_API).unwrap().text().unwrap();
-        let json: Value = serde_json::from_str(&response).unwrap();
-        let urlbase = json["images"][0]["urlbase"].as_str().unwrap();
-        let image_url = format!("https://cn.bing.com{urlbase}_UHD.jpg");
-        let image_bytes = blocking::get(&image_url).unwrap().bytes().unwrap();
+        let image_bytes = System::new("").block_on(async {
+            let client = Client::new();
+            let mut res = client.get(BING_JSON_API).send().await.unwrap();
+            let body = res.body().await.unwrap();
+            let response = String::from_utf8(body.to_vec()).unwrap();
+            let json: Value = serde_json::from_str(&response).unwrap();
+            let urlbase = json["images"][0]["urlbase"].as_str().unwrap();
+            let image_url = format!("https://cn.bing.com{urlbase}_UHD.jpg");
+            let mut img_res = client.get(image_url).send().await.unwrap();
+            img_res.body().await.unwrap()
+        });
 
         fs::write(&wallpaper_path, &image_bytes).unwrap();
 
