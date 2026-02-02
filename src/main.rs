@@ -13,7 +13,7 @@ use serde_json::Value;
 
 const BING_JSON_API: &str = "https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=zh-CN";
 const HOME_ENV: &str = if cfg!(windows) { "USERPROFILE" } else { "HOME" };
-const TEST_ADDR: ([u8; 4], u16) = ([223, 5, 5, 5], 53);
+const TEST_ADDR: ([u8; 4], u16) = ([223, 5, 5, 5], 443);
 
 fn main() {
     let wallpaper_path = PathBuf::from(env::var(HOME_ENV).unwrap())
@@ -35,8 +35,9 @@ fn main() {
             let client = ClientBuilder::new()
                 .response_payload_limit(usize::MAX)
                 .finish();
-            let mut res = client.get(BING_JSON_API).send().await.unwrap();
-            let body = res.body().await.unwrap();
+
+            let mut response = client.get(BING_JSON_API).send().await.unwrap();
+            let body = response.body().await.unwrap();
             let response = String::from_utf8(body.to_vec()).unwrap();
             let json: Value = serde_json::from_str(&response).unwrap();
             let urlbase = json["images"][0]["urlbase"].as_str().unwrap();
