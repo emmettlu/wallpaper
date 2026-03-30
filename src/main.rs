@@ -8,7 +8,11 @@ use std::{
 };
 
 use chrono::Local;
-use ntex::{http::client::ClientBuilder, rt::System};
+use ntex::{
+    SharedCfg,
+    client::ClientBuilder,
+    rt::{DefaultRuntime, System},
+};
 use serde_json::Value;
 
 const BING_JSON_API: &str = "https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=zh-CN";
@@ -31,18 +35,20 @@ fn main() {
             thread::sleep(Duration::from_secs(2))
         }
 
-        let image_bytes = System::new("").block_on(async {
+        let image_bytes = System::new("", DefaultRuntime).block_on(async {
             let client = ClientBuilder::new()
                 .response_payload_limit(usize::MAX)
-                .finish();
+                .build(SharedCfg::default())
+                .await
+                .unwrap();
 
-            let mut response = client.get(BING_JSON_API).send().await.unwrap();
+            let response = client.get(BING_JSON_API).send().await.unwrap();
             let body = response.body().await.unwrap();
             let response = String::from_utf8(body.to_vec()).unwrap();
             let json: Value = serde_json::from_str(&response).unwrap();
             let urlbase = json["images"][0]["urlbase"].as_str().unwrap();
             let image_url = format!("https://cn.bing.com{urlbase}_UHD.jpg");
-            let mut img_res = client.get(image_url).send().await.unwrap();
+            let img_res = client.get(image_url).send().await.unwrap();
             img_res.body().await.unwrap()
         });
 
