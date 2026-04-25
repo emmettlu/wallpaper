@@ -4,22 +4,22 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-chrono = "0.4"
-serde_json = "1.0"
+chrono = "0"
+serde_json = "1"
 
 [target.'cfg(unix)'.dependencies]
-ntex = { version = "3.7", default-features = false, features = [
+ntex = { version = "3", default-features = false, features = [
   "neon-uring",
   "openssl"
 ] }
 
 [target.'cfg(windows)'.dependencies]
-futures = "0.3"
-ntex = { version = "3.7", default-features = false, features = [
+futures = "0"
+ntex = { version = "3", default-features = false, features = [
   "compio",
   "openssl"
 ] }
-windows = { version = "0.62", features = [
+windows = { version = "0", features = [
   "Foundation",
   "Storage_Streams",
   "System_UserProfile",
