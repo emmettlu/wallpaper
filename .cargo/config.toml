@@ -2,8 +2,6 @@
 codegen-units = 1
 debug = false
 lto = true
-opt-level = 's'
-strip = true
-
-['cfg(unix)'.profile.release]
+opt-level = "s"
 panic = "abort"
+strip = true
