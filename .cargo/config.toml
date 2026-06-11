@@ -5,7 +5,12 @@ rustflags = ["-C", "target-cpu=znver3"]
 rustflags = ["--cfg", "windows_slim_errors"]
 
 [target.'cfg(unix)']
-rustflags = []
+rustflags = [
+  "-C",
+  "force-unwind-tables=no",
+  "-C",
+  "link-arg=-Wl,--build-id=none"
+]
 
 [profile.release]
 codegen-units = 1
