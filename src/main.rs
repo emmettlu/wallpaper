@@ -37,6 +37,7 @@ fn main() {
 
         let image_bytes = System::new("", DefaultRuntime).block_on(async {
             let client = ClientBuilder::new()
+                .disable_timeout()
                 .response_payload_limit(usize::MAX)
                 .build(SharedCfg::default())
                 .await

@@ -7,22 +7,27 @@ edition = "2024"
 chrono = "0"
 serde_json = "1"
 
-[target.'cfg(unix)'.dependencies]
-ntex = { version = "3", default-features = false, features = [
-  "neon-uring",
-  "openssl"
-] }
+[target."cfg(unix)".dependencies]
+ntex = {
+  version = "3",
+  default-features = false,
+  features = ["neon-uring", "openssl"]
+}
 
-[target.'cfg(windows)'.dependencies]
+[target."cfg(windows)".dependencies]
 futures = "0"
-ntex = { version = "3", default-features = false, features = [
-  "compio",
-  "openssl"
-] }
-windows = { version = "0", features = [
-  "Foundation",
-  "Storage_Streams",
-  "System_UserProfile",
-  "Win32_System_WinRT",
-  "Win32_UI_WindowsAndMessaging",
-] }
+ntex = {
+  version = "3",
+  default-features = false,
+  features = ["compio", "openssl"]
+}
+windows = {
+  version = "0",
+  features = [
+    "Foundation",
+    "Storage_Streams",
+    "System_UserProfile",
+    "Win32_System_WinRT",
+    "Win32_UI_WindowsAndMessaging",
+  ]
+}
