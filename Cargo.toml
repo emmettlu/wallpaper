@@ -7,12 +7,22 @@ edition = "2024"
 chrono = "0"
 serde_json = "1"
 
-[target."cfg(unix)".dependencies]
+[target.'cfg(target_os = "linux")'.dependencies]
 ntex = {
   version = "3",
   default-features = false,
   features = ["neon-uring", "openssl"]
 }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+ntex = {
+  version = "3",
+  default-features = false,
+  features = ["neon-polling", "openssl"]
+}
+objc2 = "0.6"
+objc2-app-kit = { version = "0.3", features = ["NSScreen", "NSWorkspace"] }
+objc2-foundation = "0.3"
 
 [target."cfg(windows)".dependencies]
 futures = "0"

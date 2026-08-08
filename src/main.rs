@@ -1,4 +1,5 @@
 #![windows_subsystem = "windows"]
+
 use std::{
     env, fs,
     net::{SocketAddr, TcpStream},
@@ -56,10 +57,13 @@ fn main() {
         fs::write(&wallpaper_path, &image_bytes).unwrap();
 
         #[cfg(windows)]
-        windows_set_wallpaper(&wallpaper_path)
+        set_wallpaper_windows(&wallpaper_path);
+
+        #[cfg(target_os = "macos")]
+        set_wallpaper_macos(&wallpaper_path);
     } else {
-        #[cfg(unix)]
-        std::process::exit(1)
+        #[cfg(target_os = "linux")]
+        std::process::exit(1);
     }
 }
 
@@ -79,9 +83,34 @@ fn should_download(wallpaper_path: &Path) -> bool {
     }
 }
 
+#[cfg(target_os = "macos")]
+#[inline(always)]
+fn set_wallpaper_macos(wallpaper_path: &Path) {
+    use objc2::MainThreadMarker;
+    use objc2_app_kit::{NSScreen, NSWorkspace};
+    use objc2_foundation::{NSDictionary, NSString, NSURL};
+
+    let mtm = MainThreadMarker::new().expect("must be called from the main thread");
+
+    let url = NSURL::fileURLWithPath(&NSString::from_str(unsafe {
+        wallpaper_path.to_str().unwrap_unchecked()
+    }));
+
+    let workspace = NSWorkspace::sharedWorkspace();
+    let options = NSDictionary::new();
+
+    for screen in NSScreen::screens(mtm) {
+        unsafe {
+            workspace
+                .setDesktopImageURL_forScreen_options_error(&url, &screen, &options)
+                .unwrap_unchecked()
+        }
+    }
+}
+
 #[cfg(windows)]
 #[inline(always)]
-fn windows_set_wallpaper(wallpaper_path: &Path) {
+fn set_wallpaper_windows(wallpaper_path: &Path) {
     use std::os::windows::ffi::OsStrExt;
 
     use futures::executor::block_on;

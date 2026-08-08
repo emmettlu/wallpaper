@@ -1,6 +1,3 @@
-[build]
-rustflags = ["-C", "target-cpu=znver3"]
-
 [target."cfg(windows)"]
 rustflags = ["--cfg", "windows_slim_errors"]
 
