@@ -1,4 +1,5 @@
 #![windows_subsystem = "windows"]
+#![allow(unsafe_code)]
 
 use std::{
     env, fs,

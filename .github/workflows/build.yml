@@ -10,7 +10,7 @@ jobs:
       PROJECT_BIN: wallpaper
     strategy:
       matrix:
-        os: [ubuntu-24.04, windows-2022]
+        os: [ubuntu-24.04, windows-2022, macos-26]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -55,6 +55,7 @@ jobs:
           path: |
             target/release/*.so
             target/release/*.dll
+            target/release/*.dylib
 
             target/release/${{ env.PROJECT_BIN }}
             target/release/${{ env.PROJECT_BIN }}.exe
