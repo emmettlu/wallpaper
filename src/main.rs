@@ -155,8 +155,5 @@ fn set_wallpaper(wallpaper_path: &Path) {
                 }
             }
         }
-        _ => {
-            let _ = wallpaper_path;
-        }
     }
 }
