@@ -48,6 +48,14 @@ jobs:
           cargo update
           cargo b -r
 
+      - name: Package macOS app
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          ./scripts/package-macos.sh
+          tar -czf target/release/wallpaper-macos.tar.gz \
+            -C target/release Wallpaper.app
+
       - name: Archive
         uses: actions/upload-artifact@v6
         with:
@@ -59,3 +67,4 @@ jobs:
 
             target/release/${{ env.PROJECT_BIN }}
             target/release/${{ env.PROJECT_BIN }}.exe
+            target/release/${{ env.PROJECT_BIN }}-macos.tar.gz
