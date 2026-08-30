@@ -11,7 +11,7 @@ serde_json = "1"
 ntex = { version = "3", default-features = false, features = ["neon-uring", "openssl"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
-cidre = { git = "https://github.com/emmettlu/cidre.git", branch = "feat/ns-workspace-desktop-images", default-features = false, features = ["app", "blocks", "ca", "macos_27_0"] }
+cidre = { version = "0", default-features = false, features = ["app", "blocks", "ca", "macos_27_0"] }
 ntex = { version = "3", default-features = false, features = ["neon-polling", "openssl"] }
 
 [target."cfg(windows)".dependencies]
