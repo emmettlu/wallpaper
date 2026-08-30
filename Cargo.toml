@@ -27,3 +27,10 @@ windows = {
     "Win32_UI_WindowsAndMessaging",
   ]
 }
+
+[profile.release]
+debug = false
+strip = true
+lto = true
+panic = "abort"
+codegen-units = 1
