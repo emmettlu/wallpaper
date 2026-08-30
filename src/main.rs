@@ -17,6 +17,8 @@ use ntex::{
 };
 use serde_json::Value;
 
+const RETRY_DELAY: Duration = Duration::from_secs(2);
+
 const BING_JSON_API: &str = "https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=zh-CN";
 const HOME_ENV: &str = if cfg!(windows) { "USERPROFILE" } else { "HOME" };
 const TEST_ADDR: ([u8; 4], u16) = ([223, 5, 5, 5], 443);
@@ -34,7 +36,7 @@ fn main() {
         }
 
         while TcpStream::connect(SocketAddr::from(TEST_ADDR)).is_err() {
-            thread::sleep(Duration::from_secs(2))
+            thread::sleep(RETRY_DELAY)
         }
 
         let image_bytes = System::new("", DefaultRuntime).block_on(async {
@@ -56,10 +58,10 @@ fn main() {
         });
 
         #[cfg(target_os = "macos")]
-        unsafe {
-            let mut file = fs::File::create(&wallpaper_path).unwrap_unchecked();
-            file.write_all(&image_bytes).unwrap_unchecked();
-            file.sync_all().unwrap_unchecked();
+        {
+            let mut file = fs::File::create(&wallpaper_path).unwrap();
+            file.write_all(&image_bytes).unwrap();
+            file.sync_all().unwrap();
         }
     } else {
         #[cfg(target_os = "linux")]
@@ -137,21 +139,24 @@ fn set_wallpaper(wallpaper_path: &Path) {
             });
         }
         target_os = "macos" => {
-            use objc2::MainThreadMarker;
-            use objc2_app_kit::{NSScreen, NSWorkspace};
-            use objc2_foundation::{NSDictionary, NSString, NSURL};
+            use cidre::ns;
 
-            let mtm = MainThreadMarker::new().expect("must be called from the main thread");
-            let url =
-                NSURL::fileURLWithPath(&NSString::from_str(wallpaper_path.to_str().unwrap()));
-            let workspace = NSWorkspace::sharedWorkspace();
-            let options = NSDictionary::new();
+            let url = ns::Url::with_fs_path_str(wallpaper_path.to_str().unwrap(), false);
+            let workspace = ns::Workspace::shared();
+            let options = ns::Dictionary::new();
 
-            for screen in NSScreen::screens(mtm) {
-                unsafe {
-                    workspace
-                        .setDesktopImageURL_forScreen_options_error(&url, &screen, &options)
-                        .unwrap_unchecked()
+            let mut screens = ns::Screen::screens();
+            while screens.is_empty() {
+                thread::sleep(RETRY_DELAY);
+                screens = ns::Screen::screens()
+            }
+
+            for screen in screens.iter() {
+                while workspace
+                    .set_desktop_image_url(&url, screen, &options)
+                    .is_err()
+                {
+                    thread::sleep(RETRY_DELAY)
                 }
             }
         }
