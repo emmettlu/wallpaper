@@ -1,4 +1,4 @@
-#![windows_subsystem = "windows"]
+// #![windows_subsystem = "windows"]
 
 use std::{
     env, fs,
@@ -11,8 +11,7 @@ use std::{
 
 use chrono::Local;
 use ntex::{
-    SharedCfg,
-    client::ClientBuilder,
+    client::{ClientBuilder, ClientConfig},
     rt::{DefaultRuntime, System},
 };
 use serde_json::Value;
@@ -40,12 +39,11 @@ fn main() {
         }
 
         let image_bytes = System::new("", DefaultRuntime).block_on(async {
-            let client = ClientBuilder::new()
-                .disable_timeout()
-                .response_payload_limit(usize::MAX)
-                .build(SharedCfg::default())
-                .await
-                .unwrap();
+            let client = ClientBuilder::new().build(
+                ClientConfig::new()
+                    .disable_timeout()
+                    .set_response_payload_limit(usize::MAX),
+            );
 
             let response = client.get(BING_JSON_API).send().await.unwrap();
             let body = response.body().await.unwrap();
@@ -57,12 +55,9 @@ fn main() {
             img_res.body().await.unwrap()
         });
 
-        #[cfg(target_os = "macos")]
-        {
-            let mut file = fs::File::create(&wallpaper_path).unwrap();
-            file.write_all(&image_bytes).unwrap();
-            file.sync_all().unwrap();
-        }
+        let mut file = fs::File::create(&wallpaper_path).unwrap();
+        file.write_all(&image_bytes).unwrap();
+        file.sync_all().unwrap();
     } else {
         #[cfg(target_os = "linux")]
         std::process::exit(1);
