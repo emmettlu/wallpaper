@@ -5,27 +5,20 @@ edition = "2024"
 
 [dependencies]
 chrono = "0"
+ntex = {
+  version = "4.0.0-beta.4",
+  default-features = false,
+  features = [
+    "openssl",
+  ]
+}
 serde_json = "1"
-
-[target.'cfg(target_os = "linux")'.dependencies]
-ntex = { git = "https://github.com/emmettlu/ntex.git", branch = "fix/schannel", default-features = false, features = [
-  "neon-uring",
-  "openssl",
-] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 cidre = { version = "0", default-features = false, features = ["app", "blocks", "ca", "macos_27_0"] }
-ntex = { git = "https://github.com/emmettlu/ntex.git", branch = "fix/schannel", default-features = false, features = [
-  "neon-polling",
-  "openssl",
-] }
 
 [target."cfg(windows)".dependencies]
 futures = "0"
-ntex = { git = "https://github.com/emmettlu/ntex.git", branch = "fix/schannel", default-features = false, features = [
-  "compio",
-  "schannel",
-] }
 windows = {
   version = "0",
   features = [
@@ -36,23 +29,6 @@ windows = {
     "Win32_UI_WindowsAndMessaging",
   ]
 }
-
-[patch.crates-io]
-ntex-bytes = { git = "https://github.com/emmettlu/ntex.git", branch = "fix/schannel" }
-ntex-codec = { git = "https://github.com/emmettlu/ntex.git", branch = "fix/schannel" }
-ntex-dispatcher = { git = "https://github.com/emmettlu/ntex.git", branch = "fix/schannel" }
-ntex-error = { git = "https://github.com/emmettlu/ntex.git", branch = "fix/schannel" }
-ntex-http = { git = "https://github.com/emmettlu/ntex.git", branch = "fix/schannel" }
-ntex-io = { git = "https://github.com/emmettlu/ntex.git", branch = "fix/schannel" }
-ntex-macros = { git = "https://github.com/emmettlu/ntex.git", branch = "fix/schannel" }
-ntex-net = { git = "https://github.com/emmettlu/ntex.git", branch = "fix/schannel" }
-ntex-router = { git = "https://github.com/emmettlu/ntex.git", branch = "fix/schannel" }
-ntex-rt = { git = "https://github.com/emmettlu/ntex.git", branch = "fix/schannel" }
-ntex-server = { git = "https://github.com/emmettlu/ntex.git", branch = "fix/schannel" }
-ntex-service = { git = "https://github.com/emmettlu/ntex.git", branch = "fix/schannel" }
-ntex-tls = { git = "https://github.com/emmettlu/ntex.git", branch = "fix/schannel" }
-ntex-util = { git = "https://github.com/emmettlu/ntex.git", branch = "fix/schannel" }
-ntex-h2 = { git = "https://github.com/ntex-rs/ntex-h2.git", branch = "service-updates" }
 
 [profile.release]
 debug = false
