@@ -88,9 +88,8 @@ pub fn set_wallpaper(wallpaper_path: &Path) {
             let tmp = wallpaper_path
                 .with_file_name(format!("today_bing_{}.jpg", Local::now().format("%Y%m%d")));
             fs::copy(wallpaper_path, &tmp).unwrap();
-            let wallpaper_path = tmp;
 
-            let url = ns::Url::with_fs_path_str(wallpaper_path.to_str().unwrap(), false);
+            let url = ns::Url::with_fs_path_str(tmp.to_str().unwrap(), false);
             let workspace = ns::Workspace::shared();
             let options = ns::Dictionary::new();
             let mut screens = ns::Screen::screens();
