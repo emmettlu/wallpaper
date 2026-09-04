@@ -17,7 +17,6 @@ use ntex::{
 use serde_json::Value;
 
 const RETRY_DELAY: Duration = Duration::from_secs(2);
-
 const BING_JSON_API: &str = "https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=zh-CN";
 const HOME_ENV: &str = if cfg!(windows) { "USERPROFILE" } else { "HOME" };
 const TEST_ADDR: ([u8; 4], u16) = ([223, 5, 5, 5], 443);
@@ -55,8 +54,6 @@ fn main() {
             img_res.body().await.unwrap()
         });
 
-        #[cfg(target_os = "macos")]
-        fs::remove_file(&wallpaper_path);
         let mut file = fs::File::create(&wallpaper_path).unwrap();
         file.write_all(&image_bytes).unwrap();
         file.sync_all().unwrap();
@@ -64,6 +61,14 @@ fn main() {
         #[cfg(target_os = "linux")]
         std::process::exit(1);
     }
+
+    #[cfg(target_os = "macos")]
+    let wallpaper_path = {
+        let tmp = wallpaper_path
+            .with_file_name(format!("today_bing_{}.jpg", Local::now().format("%Y%m%d")));
+        fs::copy(&wallpaper_path, &tmp).unwrap();
+        tmp
+    };
 
     set_wallpaper(&wallpaper_path)
 }
@@ -141,8 +146,8 @@ fn set_wallpaper(wallpaper_path: &Path) {
             let url = ns::Url::with_fs_path_str(wallpaper_path.to_str().unwrap(), false);
             let workspace = ns::Workspace::shared();
             let options = ns::Dictionary::new();
-
             let mut screens = ns::Screen::screens();
+
             while screens.is_empty() {
                 thread::sleep(RETRY_DELAY);
                 screens = ns::Screen::screens()
@@ -156,6 +161,8 @@ fn set_wallpaper(wallpaper_path: &Path) {
                     thread::sleep(RETRY_DELAY)
                 }
             }
+
+            fs::remove_file(wallpaper_path).unwrap()
         }
     }
 }

@@ -5,13 +5,7 @@ edition = "2024"
 
 [dependencies]
 chrono = "0"
-ntex = {
-  version = "4.0.0-beta.4",
-  default-features = false,
-  features = [
-    "openssl",
-  ]
-}
+ntex = { version = "4.0.0-beta.4", default-features = false, features = ["openssl", "ws"] }
 serde_json = "1"
 
 [target.'cfg(target_os = "macos")'.dependencies]
