@@ -62,14 +62,6 @@ fn main() {
         std::process::exit(1);
     }
 
-    #[cfg(target_os = "macos")]
-    let wallpaper_path = {
-        let tmp = wallpaper_path
-            .with_file_name(format!("today_bing_{}.jpg", Local::now().format("%Y%m%d")));
-        fs::copy(&wallpaper_path, &tmp).unwrap();
-        tmp
-    };
-
     set_wallpaper(&wallpaper_path)
 }
 
@@ -143,6 +135,25 @@ fn set_wallpaper(wallpaper_path: &Path) {
         target_os = "macos" => {
             use cidre::ns;
 
+            wallpaper_path
+                .parent().and_then(|dir| fs::read_dir(dir).ok()).into_iter()
+                .flatten().flatten().map(|entry| entry.path())
+                .filter(|path| {
+                    path.file_name()
+                        .map(|n| {
+                            n.to_string_lossy().starts_with("today_bing_")
+                        })
+                        .unwrap_or(false)
+                })
+                .for_each(|path| {
+                    let _ = fs::remove_file(path);
+                });
+
+            let tmp = wallpaper_path
+                .with_file_name(format!("today_bing_{}.jpg", Local::now().format("%Y%m%d")));
+            fs::copy(wallpaper_path, &tmp).unwrap();
+            let wallpaper_path = tmp;
+
             let url = ns::Url::with_fs_path_str(wallpaper_path.to_str().unwrap(), false);
             let workspace = ns::Workspace::shared();
             let options = ns::Dictionary::new();
@@ -161,8 +172,6 @@ fn set_wallpaper(wallpaper_path: &Path) {
                     thread::sleep(RETRY_DELAY)
                 }
             }
-
-            fs::remove_file(wallpaper_path).unwrap()
         }
     }
 }
