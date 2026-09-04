@@ -6,18 +6,15 @@ pub const RETRY_DELAY: std::time::Duration = Duration::from_secs(2);
 
 #[inline(always)]
 pub fn should_download(wallpaper_path: &Path) -> bool {
-    match fs::metadata(wallpaper_path) {
-        Ok(metadata) if metadata.len() > 0 => {
-            if let Ok(modified) = metadata.modified() {
-                let datetime: chrono::DateTime<Local> = modified.into();
-                let now = Local::now();
-                datetime.date_naive() != now.date_naive()
-            } else {
-                true
-            }
-        }
-        _ => true,
-    }
+    fs::metadata(wallpaper_path)
+        .ok()
+        .filter(|metadata| metadata.len() > 0)
+        .and_then(|metadata| metadata.modified().ok())
+        .map(|modified| {
+            let datetime: chrono::DateTime<Local> = modified.into();
+            datetime.date_naive() != Local::now().date_naive()
+        })
+        .unwrap_or(true)
 }
 
 #[inline(always)]
