@@ -55,6 +55,8 @@ fn main() {
             img_res.body().await.unwrap()
         });
 
+        #[cfg(target_os = "macos")]
+        fs::remove_file(&wallpaper_path);
         let mut file = fs::File::create(&wallpaper_path).unwrap();
         file.write_all(&image_bytes).unwrap();
         file.sync_all().unwrap();
